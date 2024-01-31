@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView } from 'react-native';
 import CurrencyComboBox from './components/CurrencyComboBox';
 
 const initialCurrencies = {
@@ -78,14 +78,13 @@ const initialCurrencies = {
     "exchangeRate": 20.45,
     "name": "Mexican Peso"
   }
-  // Resto de tus monedas...
-};
+  // Puedes agregar más códigos de moneda, emojis de banderas y nombres de moneda según tus necesidades
+}
 
 const App = () => {
   const [amount, setAmount] = useState("");
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("EUR");
-  const [currenciesList, setCurrenciesList] = useState([]);
   const [convertedAmount, setConvertedAmount] = useState(null);
 
   const convertCurrency = useCallback(() => {
@@ -111,18 +110,6 @@ const App = () => {
   }, [amount, fromCurrency, toCurrency]);
 
   useEffect(() => {
-    fetch(`https://api.exchangerate-api.com/v4/latest/USD`)
-      .then((response) => response.json())
-      .then((data) => {
-        const currencyList = Object.keys(data.rates);
-        setCurrenciesList(currencyList);
-      })
-      .catch((error) => {
-        console.error("Error fetching currency data: ", error);
-      });
-  }, []);
-
-  useEffect(() => {
     convertCurrency();
   }, [convertCurrency]);
 
@@ -136,155 +123,130 @@ const App = () => {
   };
 
   return (
-    <View style={styles.container}>
-
-
+    <ScrollView contentContainerStyle={styles.container}>
       <Image
         style={styles.logo}
-        source={require('./assets/dollaricon.jpeg')}
+        source={require('./assets/dollaricon.png')}
       />
+      <View style={styles.subcontainer}>
 
-      <Text style={styles.label}>Origin Currency:</Text>
-
-      <CurrencyComboBox
-        style={styles.input}
-        currencies={initialCurrencies}
-        selectedCurrency={fromCurrency}
-        onSelectCurrency={(currency) => setFromCurrency(currency)}
-      />
-      <Text style={styles.label}>Amount:</Text>
-      <TextInput
-        style={styles.input}
-        value={amount}
-        onChangeText={(text) => setAmount(text)}
-        keyboardType="numeric"
-        placeholder="Enter amount"
-        placeholderTextColor="#999"
-      />
-
-
-      <Text style={styles.label}>To Currency:</Text>
-
-      <CurrencyComboBox
-
-        currencies={initialCurrencies}
-        selectedCurrency={toCurrency}
-        onSelectCurrency={(currency) => setToCurrency(currency)}
-      />
-      <View
-        style={styles.containers}>
-        <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
-          <Text style={styles.convertButtonText}>Convert</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.convertButton} onPress={clearResult}>
-          <Text style={styles.convertButtonText}>Clear</Text>
-        </TouchableOpacity>
+        <Text style={styles.label}>Origin Currency:</Text>
+        <CurrencyComboBox
+          currencies={initialCurrencies}
+          selectedCurrency={fromCurrency}
+          onSelectCurrency={(currency) => setFromCurrency(currency)}
+        />
+        
+        <Text style={styles.label}>Amount:</Text>
+        <TextInput
+          style={styles.input}
+          value={amount}
+          onChangeText={(text) => setAmount(text)}
+          keyboardType="numeric"
+          placeholder="Enter amount"
+          placeholderTextColor="#999"
+        />
+        <Image
+          source={require('./assets/arrow.png')}
+        />
+        <Text style={styles.label}>To Currency:</Text>
+        <CurrencyComboBox
+          currencies={initialCurrencies}
+          selectedCurrency={toCurrency}
+          onSelectCurrency={(currency) => setToCurrency(currency)}
+        />
+        <View style={styles.row}>
+          <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
+            <Text style={styles.convertButtonText}>Convert</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.convertButton} onPress={clearResult}>
+            <Text style={styles.convertButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+        {convertedAmount !== null && (
+          <Text style={styles.result}>
+            {amount} {fromCurrency} is {convertedAmount} {toCurrency}
+          </Text>
+        )}
       </View>
-
-
-      {convertedAmount !== null && (
-        <Text style={styles.result}>
-          {amount} {fromCurrency} is {convertedAmount} {toCurrency}
-        </Text>
-      )}
-
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5"
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fffee1',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+
   },
   subcontainer: {
-    shadowColor: "rgba(0, 0, 0, 0.2)",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 15,
-    elevation: 5,
-    padding: 40,
+    width: '80%',
+    padding: 20,
     borderRadius: 20,
-    backgroundColor: "#ffffff"
+    backgroundColor: '#fffdc2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
   header: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 20,
-    color: "green"
+    color: 'green',
   },
   label: {
-    fontSize: 19,
-    marginRight: 10,
-    color: "#333",
-    fontFamily: "Pacifico"
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#333',
+    alignSelf: 'flex-start',
   },
   input: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: "#d37c2b",
+    borderColor: '#d37c2b',
+    backgroundColor: '#ffffff',
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 40,
-    color: "#333",
-    marginBottom: 10
-  },
-  swapButton: {
-    backgroundColor: "#ddd",
-    borderRadius: 50,
-    width: 45,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10
-  },
-  swapButtonText: {
-    fontSize: 30,
-    textAlign: "center",
-    color: "red",
-    marginBottom: 10
+    color: '#333',
+    marginBottom: 20,
   },
   convertButton: {
-    backgroundColor: "#d37c2b",
+    backgroundColor: '#d37c2b',
     borderRadius: 4,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    marginTop: 10,
-    shadowColor: "rgba(211, 124, 43, 0.5)",
+    marginVertical: 10,
+    marginHorizontal: 5,
+    shadowColor: 'rgba(211, 124, 43, 0.5)',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 15,
-    elevation: 3
+    elevation: 3,
   },
   convertButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center"
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   result: {
     marginTop: 20,
     fontSize: 18,
-    color: "#333"
+    color: '#333',
+    alignSelf: 'flex-start',
   },
   logo: {
     width: 150,
     height: 150,
-    marginBottom: 20
-
+    marginBottom: 20,
   },
-  dropdown: {
-    width: 150,
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    justifyContent: "center",
-    color: "#333"
-  }
 });
 
 export default App;
