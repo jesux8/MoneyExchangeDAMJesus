@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView, Modal, Button, FlatList } from 'react-native';
 import CurrencyComboBox from './components/CurrencyComboBox';
 
 const initialCurrencies = {
@@ -81,11 +81,14 @@ const initialCurrencies = {
   // Puedes agregar más códigos de moneda, emojis de banderas y nombres de moneda según tus necesidades
 }
 
+
 const App = () => {
   const [amount, setAmount] = useState("");
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("EUR");
   const [convertedAmount, setConvertedAmount] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [conversions, setConversions] = useState([]);
 
   const convertCurrency = useCallback(() => {
     if (!amount) {
@@ -99,7 +102,9 @@ const App = () => {
         const conversionRate = exchangeRates[toCurrency];
         if (conversionRate) {
           const result = parseFloat(amount) * conversionRate;
+          const newConversion = `${amount} ${fromCurrency} is ${result.toFixed(2)} ${toCurrency}`;
           setConvertedAmount(result.toFixed(2));
+          setConversions(prevConversions => [...prevConversions, newConversion]);
         } else {
           setConvertedAmount("Invalid Currency");
         }
@@ -109,71 +114,121 @@ const App = () => {
       });
   }, [amount, fromCurrency, toCurrency]);
 
-  useEffect(() => {
-    convertCurrency();
-  }, [convertCurrency]);
+  const renderConversionItem = ({ item }) => (
+    <View style={styles.conversionItem}>
+      <Text style={styles.conversionText}>{item}</Text>
+    </View>
+  );
 
-  const swapCurrencies = () => {
-    setFromCurrency(toCurrency);
-    setToCurrency(fromCurrency);
-  };
-
-  const clearResult = () => {
-    setConvertedAmount(null);
-  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Image
-        style={styles.logo}
-        source={require('./assets/dollaricon.png')}
-      />
-      <View style={styles.subcontainer}>
+    <View style={styles.container}>
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Image
+            style={styles.logo}
+            source={require('./assets/dollaricon.png')}
+          />
+          <View style={styles.subcontainer}>
+            <Text style={styles.label}>Origin Currency:</Text>
+            <CurrencyComboBox
+              currencies={initialCurrencies}
+              selectedCurrency={fromCurrency}
+              onSelectCurrency={(currency) => setFromCurrency(currency)}
+            />
+            <Text style={styles.label}>Amount:</Text>
+            <TextInput
+              style={styles.input}
+              value={amount}
+              onChangeText={(text) => setAmount(text)}
+              keyboardType="numeric"
+              placeholder="Enter amount"
+              placeholderTextColor="#999"
+            />
+            <Image
+              source={require('./assets/arrow.png')}
+            />
+            <Text style={styles.label}>To Currency:</Text>
+            <CurrencyComboBox
+              currencies={initialCurrencies}
+              selectedCurrency={toCurrency}
+              onSelectCurrency={(currency) => setToCurrency(currency)}
+            />
+            <View style={styles.row}>
+              <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
+                <Text style={styles.convertButtonText}>Convert</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.convertButton} onPress={() => setModalVisible(!modalVisible)}>
+                <Text style={styles.convertButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            {convertedAmount !== null && (
+              <Text style={styles.result}>
+                {amount} {fromCurrency} is {convertedAmount} {toCurrency}
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </Modal>
 
-        <Text style={styles.label}>Origin Currency:</Text>
-        <CurrencyComboBox
-          currencies={initialCurrencies}
-          selectedCurrency={fromCurrency}
-          onSelectCurrency={(currency) => setFromCurrency(currency)}
-        />
-        
-        <Text style={styles.label}>Amount:</Text>
-        <TextInput
-          style={styles.input}
-          value={amount}
-          onChangeText={(text) => setAmount(text)}
-          keyboardType="numeric"
-          placeholder="Enter amount"
-          placeholderTextColor="#999"
+      <View style={styles.row}>
+        <Image
+          source={require('./assets/exchangeicon.png')}
+
         />
         <Image
-          source={require('./assets/arrow.png')}
+          source={require('./assets/title.png')}
+          style={styles.newIcon}
         />
-        <Text style={styles.label}>To Currency:</Text>
-        <CurrencyComboBox
-          currencies={initialCurrencies}
-          selectedCurrency={toCurrency}
-          onSelectCurrency={(currency) => setToCurrency(currency)}
-        />
-        <View style={styles.row}>
-          <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
-            <Text style={styles.convertButtonText}>Convert</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.convertButton} onPress={clearResult}>
-            <Text style={styles.convertButtonText}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-        {convertedAmount !== null && (
-          <Text style={styles.result}>
-            {amount} {fromCurrency} is {convertedAmount} {toCurrency}
-          </Text>
-        )}
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Image
+            source={require('./assets/new.png')}
+
+          />
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      <View style={{ flex: 2 }}>
+        <FlatList
+          data={conversions}
+          renderItem={renderConversionItem}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </View>
+
+
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  goalItem: {
+    
+  },
+  goalText: {
+    color: "white"
+  },
+  pressedItem: {
+    opacity: 0.5
+  },
+  conversionItem: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 20,
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: "#d2e09d"
+  },
+  conversionText: {
+    fontSize: 16,
+  },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -181,8 +236,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fffee1',
   },
   row: {
+    flex: 1,
+    justifyContent: 'flex-end',
     flexDirection: 'row',
     flexWrap: 'wrap',
+    margin: 10,
+
+  },
+  newIcon: {
+    marginTop: 40,
+
 
   },
   subcontainer: {
