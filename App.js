@@ -102,7 +102,7 @@ const App = () => {
         const conversionRate = exchangeRates[toCurrency];
         if (conversionRate) {
           const result = parseFloat(amount) * conversionRate;
-          const newConversion = `${amount} ${fromCurrency} is ${result.toFixed(2)} ${toCurrency}`;
+          const newConversion = `${amount} ${fromCurrency} ${result.toFixed(2)} ${toCurrency}`;
           setConvertedAmount(result.toFixed(2));
           setConversions(prevConversions => [...prevConversions, newConversion]);
         } else {
@@ -114,15 +114,46 @@ const App = () => {
       });
   }, [amount, fromCurrency, toCurrency]);
 
-  const renderConversionItem = ({ item }) => (
-    <View style={styles.conversionItem}>
-      <Text style={styles.conversionText}>{item}</Text>
-    </View>
-  );
+  const renderConversionItem = ({ item }) => {
+    const [amount, fromCurrency, result, toCurrency] = item.split(' ');
+    const fromCurrencyEmoji = initialCurrencies[fromCurrency].emoji;
+    const toCurrencyEmoji = initialCurrencies[toCurrency].emoji;
+    return (
+      <View style={styles.conversionItem}>
+
+        <View style={styles.emojiAndCurrency}>
+          <Text style={styles.conversionEmoji}>
+            {`${fromCurrencyEmoji}`}
+          </Text>
+          <Text style={styles.conversionText}>
+            {`${amount} ${fromCurrency}`}
+          </Text>
+        </View>
+
+        <Image
+          style={styles.doublearrow}
+          source={require('./assets/doublearrow.png')}
+        />
+
+        <View style={styles.emojiAndCurrency}>
+          <Text style={styles.conversionEmoji}>
+            {`${toCurrencyEmoji}`}
+          </Text>
+          <Text style={styles.conversionText}>
+            {`${result} ${toCurrency}`}
+          </Text>
+        </View>
+
+
+      </View>
+    );
+  };
+
 
 
   return (
     <View style={styles.container}>
+
       <Modal
         animationType="slide"
         transparent={false}
@@ -162,11 +193,12 @@ const App = () => {
               onSelectCurrency={(currency) => setToCurrency(currency)}
             />
             <View style={styles.row}>
-              <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
-                <Text style={styles.convertButtonText}>Convert</Text>
-              </TouchableOpacity>
+              
               <TouchableOpacity style={styles.convertButton} onPress={() => setModalVisible(!modalVisible)}>
                 <Text style={styles.convertButtonText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
+                <Text style={styles.convertButtonText}>Convert</Text>
               </TouchableOpacity>
             </View>
             {convertedAmount !== null && (
@@ -195,7 +227,7 @@ const App = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={{ flex: 2 }}>
+      <View style={{ flex: 4 }}>
         <FlatList
           data={conversions}
           renderItem={renderConversionItem}
@@ -203,31 +235,36 @@ const App = () => {
         />
       </View>
 
-
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  goalItem: {
-    
-  },
-  goalText: {
-    color: "white"
+  emojiAndCurrency: {
+    padding: 10,
+    alignItems: 'center',
+    alignContent: 'center',
+
   },
   pressedItem: {
     opacity: 0.5
   },
   conversionItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignContent: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 20,
+    paddingVertical: 8,
     marginBottom: 10,
     borderRadius: 12,
     backgroundColor: "#d2e09d"
   },
   conversionText: {
-    fontSize: 16,
+    fontSize: 18,
+  },
+  conversionEmoji: {
+    fontSize: 30,
   },
   container: {
     flexGrow: 1,
@@ -236,8 +273,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fffee1',
   },
   row: {
-    flex: 1,
+    flex: 2,
     justifyContent: 'flex-end',
+    alignContent: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     margin: 10,
@@ -266,6 +304,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 5,
+    marginTop: 5,
     color: '#333',
     alignSelf: 'flex-start',
   },
@@ -304,6 +343,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333',
     alignSelf: 'flex-start',
+  },
+  doublearrow: {
+    width: 70,
+    height: 30,
   },
   logo: {
     width: 150,
