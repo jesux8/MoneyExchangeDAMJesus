@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView, Modal, Button, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, TouchableOpacity, ScrollView, Modal, Button, FlatList, Animated } from 'react-native';
 import CurrencyComboBox from './components/CurrencyComboBox';
+import ModalComponent from './components/Modal';
+
 
 const initialCurrencies = {
   "USD": {
@@ -90,6 +92,11 @@ const App = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [conversions, setConversions] = useState([]);
 
+
+  useEffect(() => {
+    convertCurrency();
+  }, [convertCurrency]);
+
   const convertCurrency = useCallback(() => {
     if (!amount) {
       setConvertedAmount(null);
@@ -114,10 +121,17 @@ const App = () => {
       });
   }, [amount, fromCurrency, toCurrency]);
 
-  const renderConversionItem = ({ item }) => {
+  const renderConversionItem = ({ item, index }) => {
     const [amount, fromCurrency, result, toCurrency] = item.split(' ');
     const fromCurrencyEmoji = initialCurrencies[fromCurrency].emoji;
     const toCurrencyEmoji = initialCurrencies[toCurrency].emoji;
+
+    const handleDeleteItem = () => {
+      const updatedConversions = [...conversions];
+      updatedConversions.splice(index, 1); // Eliminar el elemento en la posición index
+      setConversions(updatedConversions);
+    };
+
     return (
       <View style={styles.conversionItem}>
 
@@ -144,6 +158,13 @@ const App = () => {
           </Text>
         </View>
 
+        <TouchableOpacity onPress={handleDeleteItem}>
+          <Image
+            style={styles.deletebtn}
+            source={require('./assets/delete.png')}
+          />
+        </TouchableOpacity>
+
 
       </View>
     );
@@ -154,66 +175,24 @@ const App = () => {
   return (
     <View style={styles.container}>
 
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <ScrollView contentContainerStyle={styles.container}>
-          <Image
-            style={styles.logo}
-            source={require('./assets/dollaricon.png')}
-          />
-          <View style={styles.subcontainer}>
-            <Text style={styles.label}>Origin Currency:</Text>
-            <CurrencyComboBox
-              currencies={initialCurrencies}
-              selectedCurrency={fromCurrency}
-              onSelectCurrency={(currency) => setFromCurrency(currency)}
-            />
-            <Text style={styles.label}>Amount:</Text>
-            <TextInput
-              style={styles.input}
-              value={amount}
-              onChangeText={(text) => setAmount(text)}
-              keyboardType="numeric"
-              placeholder="Enter amount"
-              placeholderTextColor="#999"
-            />
-            <Image
-              source={require('./assets/arrow.png')}
-            />
-            <Text style={styles.label}>To Currency:</Text>
-            <CurrencyComboBox
-              currencies={initialCurrencies}
-              selectedCurrency={toCurrency}
-              onSelectCurrency={(currency) => setToCurrency(currency)}
-            />
-            <View style={styles.row}>
-              
-              <TouchableOpacity style={styles.convertButton} onPress={() => setModalVisible(!modalVisible)}>
-                <Text style={styles.convertButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.convertButton} onPress={convertCurrency}>
-                <Text style={styles.convertButtonText}>Convert</Text>
-              </TouchableOpacity>
-            </View>
-            {convertedAmount !== null && (
-              <Text style={styles.result}>
-                {amount} {fromCurrency} is {convertedAmount} {toCurrency}
-              </Text>
-            )}
-          </View>
-        </ScrollView>
-      </Modal>
+      <ModalComponent
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        fromCurrency={fromCurrency}
+        setFromCurrency={setFromCurrency}
+        amount={amount}
+        setAmount={setAmount}
+        toCurrency={toCurrency}
+        setToCurrency={setToCurrency}
+        convertCurrency={convertCurrency}
+        initialCurrencies={initialCurrencies}
+        convertedAmount={convertedAmount}
+        styles={styles}
+      />
 
       <View style={styles.row}>
         <Image
           source={require('./assets/exchangeicon.png')}
-
         />
         <Image
           source={require('./assets/title.png')}
@@ -222,7 +201,6 @@ const App = () => {
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Image
             source={require('./assets/new.png')}
-
           />
         </TouchableOpacity>
       </View>
@@ -255,7 +233,7 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingVertical: 8,
+    padding: 10,
     marginBottom: 10,
     borderRadius: 12,
     backgroundColor: "#d2e09d"
@@ -283,8 +261,6 @@ const styles = StyleSheet.create({
   },
   newIcon: {
     marginTop: 40,
-
-
   },
   subcontainer: {
     width: '80%',
@@ -319,6 +295,11 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
   },
+  deletebtn: {
+    paddingLeft: 5,
+    width: 30,
+    height: 30,
+  },
   convertButton: {
     backgroundColor: '#d37c2b',
     borderRadius: 4,
@@ -347,11 +328,6 @@ const styles = StyleSheet.create({
   doublearrow: {
     width: 70,
     height: 30,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
   },
 });
 
